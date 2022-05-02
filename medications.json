@@ -1,0 +1,76 @@
+{
+		"Trazodone 100mg": {
+			"form": "tablet",
+			"instruction": "Starting DATE AMPM give DOSE by, mouth every SID/BID hours as needed for, stress/anxiety. May cause drowsiness.",
+			"frequency": 2
+		},
+		"Trazodone 50mg": {
+			"form": "tablet",
+			"instruction": "Starting DATE AMPM give DOSE by mouth every SID/BID hours as needed for stress/anxiety. May cause drowsiness.",
+			"frequency": 2
+		},
+		"Doxycycline 100mg": {
+			"form": "tablet",
+			"instruction": "Starting DATE AMPM give DOSE by mouth every SID/BID hours until gone.",
+			"frequency": 1
+		},
+		"Gabapentin 100mg/ml": {
+			"form": "mL",
+			"instruction": "Starting DATE AMPM give DOSE by mouth every SID/BID hours as needed for stress/anxiety.",
+			"frequency": 2
+		},
+		"Gabapentin 100mg": {
+			"form": "capsule",
+			"instruction": "Starting DATE AMPM give DOSE by mouth every SID/BID hours as needed for stress/anxiety.",
+			"frequency": 2
+		},
+		"Gabapentin 400mg": {
+			"form": "capsule",
+			"instruction": "Starting DATE AMPM give DOSE by mouth every SID/BID hours as needed for stress/anxiety.",
+			"frequency": 2
+		},
+		"Metronidazole 250mg": {
+			"form": "tablet",
+			"instruction": "Starting DATE AMPM give DOSE by mouth every SID/BID hours until gone.",
+			"frequency": 2
+		},
+		"Carprofen 25mg": {
+			"form": "tablet",
+			"instruction": "Starting DATE AMPM give DOSE by mouth every SID/BID hours until gone.",
+			"frequency": 1
+		},
+		"Carprofen 75mg": {
+			"form": "tablet",
+			"instruction": "Starting DATE AMPM give DOSE by mouth every SID/BID hours until gone.",
+			"frequency": 1
+		},
+		"Carprofen 100mg": {
+			"form": "tablet",
+			"instruction": "Starting DATE AMPM give DOSE by mouth every SID/BID hours until gone.",
+			"frequency": 1
+		},
+		"Cephalexin 300mg": {
+			"form": "tablet",
+			"instruction": "Starting DATE AMPM give DOSE by mouth every SID/BID hours until gone.",
+			"frequency": 2
+		},
+		"Cephalexin 500mg": {
+			"form": "tablet",
+			"instruction": "Starting DATE AMPM give DOSE by mouth every SID/BID hours until gone.",
+			"frequency": 2
+		},
+		"Mometamax": {
+			"form": "mL",
+			"instruction": "Starting DATE AMPM give DOSE by mouth every SID/BID hours until gone.",
+			"frequency": 2
+		},
+		"Erythromycin": {
+			"form": "tube",
+			"instruction": "Starting DATE AMPM give DOSE by mouth every SID/BID hours until gone.",
+			"frequency": 2
+		}
+	
+		
+		
+	
+}
