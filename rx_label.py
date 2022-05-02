@@ -136,11 +136,9 @@ class Application(tk.Frame):
         # TreeView
         #----------------------------------------------
         self.tree_frame = Frame(self, padx=10, pady=10)
+               
         
-        self.tree_scroll = Scrollbar(self.tree_frame)
-        
-        
-        self.rx_tree = ttk.Treeview(self.tree_frame, height = 20, yscrollcommand=self.tree_scroll.set)
+        self.rx_tree = ttk.Treeview(self.tree_frame, height = 20)
         self.rx_tree['columns'] = ("Date", "Name", "Owner", "Animal Number", "Medication", "Total Dose", "Instruction")
         self.rx_tree.column("#0", width=0)
         self.rx_tree.column("Date", minwidth=40, width=60, anchor=CENTER)
@@ -159,7 +157,12 @@ class Application(tk.Frame):
         self.rx_tree.heading("Total Dose", text="Total Dose", anchor=CENTER)
         self.rx_tree.heading("Instruction", text="Instruction", anchor=CENTER)
         
-        self.tree_scroll.config(command=self.rx_tree.yview)
+        
+        self.tree_scroll = ttk.Scrollbar(self.tree_frame, orient='horizontal')
+        self.tree_scroll.config(command=self.rx_tree.xview)
+        self.rx_tree.configure(xscrollcommand=self.tree_scroll.set)
+        
+        
         
         self.rx_tree.bind("<<TreeviewSelect>>", self.toggleButton)
         
@@ -254,8 +257,8 @@ class Application(tk.Frame):
 
 
         self.tree_frame.grid(row = 0, column = 1, rowspan=20)
-        # self.tree_scroll.grid(row=0, column=1, rowspan=20)
         self.rx_tree.grid(row=0,column=1, rowspan=20)
+        self.tree_scroll.grid(row=20, column=1, sticky=W+E)
         self.deleteButton.grid(row=1,column=2, sticky=W)
         self.editButton.grid(row=2,column=2, sticky=W)
         self.saveButton.grid(row=3,column=2, sticky=W)
@@ -315,12 +318,32 @@ class Application(tk.Frame):
         
         file = open("prescription-csv.csv", "w", newline='', encoding='utf-8')
         
-        
+        maxchars = 36
         for child in self.rx_tree.get_children():
-            print(self.rx_tree.item(child)["values"])
-            instr = self.rx_tree.item(child)["values"][6]
-            write = csv.writer(file, delimiter=',')
-            write.writerow(self.rx_tree.item(child)["values"])
+            treeEntry = self.rx_tree.item(child)["values"]
+            instr = treeEntry[6]
+            instrList = instr.split(" ")
+            # print(instrList)
+            
+            tempString = ''
+            instrStringCsv = ''
+            for x in instrList:
+                
+                tempString += x + ' '
+                
+                if len(tempString) >= maxchars:
+                    instrStringCsv += tempString.strip() + ', '
+                    tempString = ' '
+                elif x == instrList[-1]:
+                    instrStringCsv += tempString.strip()
+                
+            # Write to CSV fill
+            treeEntry[6] = instrStringCsv
+            for i in treeEntry:
+                if i == treeEntry[-1]:
+                    file.write(i)
+                else:
+                    file.write(i+", ")
 
         file.close()
         
