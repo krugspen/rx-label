@@ -1,5 +1,6 @@
 import tkinter as tk                # python 3
 from tkinter import *
+from tkinter import messagebox
 from tkinter import font as tkfont  # python 3
 import json
 import datetime
@@ -17,17 +18,30 @@ def loadDB(database):
 def init():
     global rxTreeID
     global db
+    global hist
+    hist = []
     db = loadDB('medications.json')
     
-    if os.path.exists("prescription-csv.csv"):
-        with open("prescription-csv.csv", "r") as ff, open("prescription-csv-history.csv","a") as sf:
+    if os.path.exists("rawdata"):
+        with open("rawdata", "r") as ff, open("prescription-csv-history.csv","a") as sf:
+            # sf.write("\n")
             for line in ff:
                 sf.write(line)
                 
     
         ff.close()
         sf.close()
+        os.remove("rawdata")
+        
+    if os.path.exists("prescription-csv.csv"):
         os.remove("prescription-csv.csv")
+        
+    with open("prescription-csv-history.csv", "r") as file:
+        reader = csv.reader(file)
+        for row in reader:
+            hist.append(row)
+    
+    
     
 class Application(tk.Frame):
     
@@ -47,6 +61,35 @@ class Application(tk.Frame):
         self.csvList = []
         self.saveDose=[]
         self.saveDur=[]
+        
+        
+        
+        menu = Menu(self.master)
+        self.master.config(menu=menu)
+        
+        fileMenu = Menu(menu, tearoff=0)
+        fileMenu.add_command(label="History", command = self.searchHistory)
+        fileMenu.add_command(label="History File", command = self.historyFile)
+        fileMenu.add_separator()
+        fileMenu.add_command(label="Save As...")
+        fileMenu.add_separator()
+        fileMenu.add_command(label="Exit")
+        menu.add_cascade(label="File", menu=fileMenu)
+
+        editMenu = Menu(menu, tearoff=0)
+        editMenu.add_command(label="Undo")
+        editMenu.add_command(label="Redo")
+        editMenu.add_separator()
+        editMenu.add_command(label="Cut")
+        editMenu.add_command(label="Copy")
+        editMenu.add_command(label="Paste")
+        menu.add_cascade(label="Edit", menu=editMenu)
+        
+        medMenu = Menu(menu, tearoff=0)
+        medMenu.add_command(label="New")
+        medMenu.add_command(label="Edit")
+        medMenu.add_command(label="Search")
+        menu.add_cascade(label="Medications", menu=medMenu)
         
         
         # FRAME 1: Left side
@@ -139,8 +182,10 @@ class Application(tk.Frame):
                
         
         self.rx_tree = ttk.Treeview(self.tree_frame, height = 20)
-        self.rx_tree['columns'] = ("Date", "Name", "Owner", "Animal Number", "Medication", "Total Dose", "Instruction")
+        self.rx_tree['columns'] = ("Date", "Name", "Owner", "Animal Number", "Medication", "Total Dose", "Instruction", "Dose", "Duration")
         self.rx_tree.column("#0", width=0)
+        self.rx_tree.column("Dose", width = 0)
+        self.rx_tree.column("Duration", width = 0)
         self.rx_tree.column("Date", minwidth=40, width=60, anchor=CENTER)
         self.rx_tree.column("Name", minwidth=80, width=100, anchor=CENTER)
         self.rx_tree.column("Owner", minwidth=80, width=100, anchor=CENTER)
@@ -157,10 +202,11 @@ class Application(tk.Frame):
         self.rx_tree.heading("Total Dose", text="Total Dose", anchor=CENTER)
         self.rx_tree.heading("Instruction", text="Instruction", anchor=CENTER)
         
+        self.rx_tree["displaycolumns"]=("Date", "Name", "Owner", "Animal Number", "Medication", "Total Dose", "Instruction")
         
-        self.tree_scroll = ttk.Scrollbar(self.tree_frame, orient='horizontal')
-        self.tree_scroll.config(command=self.rx_tree.xview)
-        self.rx_tree.configure(xscrollcommand=self.tree_scroll.set)
+        # self.tree_scroll = ttk.Scrollbar(self.tree_frame, orient='horizontal')
+        # self.tree_scroll.config(command=self.rx_tree.xview)
+        # self.rx_tree.configure(xscrollcommand=self.tree_scroll.set)
         
         
         
@@ -168,8 +214,9 @@ class Application(tk.Frame):
         
         # Edit/Save Button
         #-----------------------------
+        self.searchButton = tk.Button(self, text="Search", command = self.searchHistory, width = 5)
         self.deleteButton = tk.Button(self, text="Delete", command=self.deleteTreeItem, width=5, state=DISABLED)
-        self.editButton = tk.Button(self, text="Edit", command=self.editTreeItem, width=5, state=DISABLED)
+        self.editButton = tk.Button(self, text="Edit", command=self.editRxTreeItem, width=5, state=DISABLED)
         self.saveButton = tk.Button(self, text="Save", command=self.addToCSV, width=5, state=DISABLED)
         
         
@@ -258,10 +305,11 @@ class Application(tk.Frame):
 
         self.tree_frame.grid(row = 0, column = 1, rowspan=20)
         self.rx_tree.grid(row=0,column=1, rowspan=20)
-        self.tree_scroll.grid(row=20, column=1, sticky=W+E)
-        self.deleteButton.grid(row=1,column=2, sticky=W)
-        self.editButton.grid(row=2,column=2, sticky=W)
-        self.saveButton.grid(row=3,column=2, sticky=W)
+        # self.tree_scroll.grid(row=20, column=1, sticky=W+E)
+        # self.searchButton.grid(row=1, column=2, sticky=W)
+        self.deleteButton.grid(row=2,column=2, sticky=W)
+        self.editButton.grid(row=3,column=2, sticky=W)
+        self.saveButton.grid(row=4,column=2, sticky=W)
 
 
     def toggleButton(self, event):
@@ -296,13 +344,16 @@ class Application(tk.Frame):
         
         # Display information in Tree
         self.rx_tree.insert(parent='', index='end', iid=self.rxTreeID, text="Parent", values=(
-            self.startingBox.get(),
+            # self.startingBox.get(),
+            self.dateFormat,
             self._nameBox.get(), 
             self._onameBox.get(), 
             self._anumBox.get(),
             self._medication.get(),
             self.totalDoseMod,
-            self.instrMod))        
+            self.instrMod,
+            self.doseBox.get(),
+            self.durationBox.get()))
         self.rxTreeID+=1
         
         
@@ -317,6 +368,9 @@ class Application(tk.Frame):
         #self.calculate()
         
         file = open("prescription-csv.csv", "w", newline='', encoding='utf-8')
+        rawfile = open("rawdata", "w", newline='', encoding='utf-8')
+        
+        file.write("DATE,NAME (17),A NUMBER,OWNER NAME,MEDICATION (24.4),Quantity (ml or # capsule/ tablets),DIRECTIONS (DO NOT CHANGE WIDTH OF THIS CELL. IF YOUR TEXT OVERFLOWS USE THE NEXT COLUMNS AS NEEDED.) 34.7,DIRECTIONS OVERFLOW LINE 2  (DO NOT CHANGE WIDTH OF THIS CELL. IF YOUR TEXT OVERFLOWS USE THE NEXT COLUMNS AS NEEDED.) 43.8,DIRECTIONS OVERFLOW LINE 3  (DO NOT CHANGE WIDTH OF THIS CELL. IF YOUR TEXT OVERFLOWS USE THE NEXT COLUMNS AS NEEDED.) 43.8,DIRECTIONS OVERFLOW LINE 4  (DO NOT CHANGE WIDTH OF THIS CELL. IF YOUR TEXT OVERFLOWS YOU ARE S.O.L.) 43.8\n")
         
         maxchars = 36
         for child in self.rx_tree.get_children():
@@ -338,14 +392,18 @@ class Application(tk.Frame):
                     instrStringCsv += tempString.strip()
                 
             # Write to CSV fill
-            treeEntry[6] = instrStringCsv
             for i in treeEntry:
-                if i == treeEntry[-1]:
-                    file.write(i)
-                else:
-                    file.write(i+", ")
-
+                rawfile.write(str(i)+",")
+                
+            treeEntry[6] = instrStringCsv
+            for i in treeEntry[:-2]:
+                file.write(str(i)+", ")
+        
+            file.write("\n")
+            rawfile.write("\n")
+            
         file.close()
+        rawfile.close()
         
         self.saveButton['state']=DISABLED
         
@@ -358,8 +416,23 @@ class Application(tk.Frame):
         self.saveButton['state']=NORMAL
         self.editButton['state']=DISABLED
         self.deleteButton['state']=DISABLED
+        
+    def deleteHistItem(self):
+        res = messagebox.askyesnocancel(message="Permanently delete this entry from history?")
+        
+        if res == True:
+            curItems=self.pmh_tree.selection()
+            for item in curItems:
+                # print(item)
+                self.pmh_tree.delete(item)
+                # print(hist[9])
+                newHist = [x for x in hist if x != hist[int(item)]]
+                # hist = newHist
+            
+        
+    
 
-    def editTreeItem(self):
+    def editRxTreeItem(self):
         self.addButton['state']=DISABLED
         self.updateButton['state']=NORMAL
         
@@ -368,6 +441,28 @@ class Application(tk.Frame):
         # self.editButton['state']=NORMAL
         
         values=self.rx_tree.item(self.curItem)['values']
+        
+        instruction = values[6]
+        self.startingDateText = instruction.split(" ")[1]
+        
+    
+        self.replaceEdits(values)
+
+    def editHistTreeItem(self):
+        self.addButton['state']=NORMAL
+        self.updateButton['state']=DISABLED
+        
+        self.curItem=self.pmh_tree.focus()
+        
+        # self.editButton['state']=NORMAL
+        
+        values=self.pmh_tree.item(self.curItem)['values']
+    
+        self.replaceEdits(values)
+    
+
+
+    def replaceEdits(self, values):
 
         self._nameBox.delete(0, END)
         self._onameBox.delete(0, END)
@@ -381,9 +476,9 @@ class Application(tk.Frame):
         self._onameBox.insert(END,values[2])
         self._anumBox.insert(END, values[3])
         self.medication.set(values[4])
-        self.doseBox.insert(END,self.saveDose[int(self.curItem)])
-        self.durationBox.insert(END,self.saveDur[int(self.curItem)])
-        self.startingBox.insert(END,values[0])
+        self.doseBox.insert(END,values[7])
+        self.durationBox.insert(END,values[8])
+        self.startingBox.insert(END, self.startingDateText)
         self.instructionBox.insert(END, values[6])
         
         
@@ -391,13 +486,16 @@ class Application(tk.Frame):
     def updateTreeItem(self):
         self.calculate()
         self.rx_tree.item(self.curItem, values =(
-            self.startingBox.get(),
+            # self.startingBox.get(),
+            self.dateFormat,
             self._nameBox.get(), 
             self._onameBox.get(), 
             self._anumBox.get(),
             self._medication.get(),
             self.totalDose,
-            self.instructionBox.get(1.0, "end-1c")))  
+            self.instructionBox.get(1.0, "end-1c"), 
+            self.doseBox.get(),
+            self.durationBox.get()))
                     
         self.updateButton['state']=DISABLED
         self.addButton['state']=NORMAL
@@ -405,6 +503,79 @@ class Application(tk.Frame):
         self.editButton['state']=DISABLED
         self.deleteButton['state']=DISABLED
     
+    
+    
+    
+    def searchHistory(self):
+        win = Toplevel(self)
+        win.title("History")
+        win.geometry("750x750")
+               
+    
+        # Tree
+        treeFrame = Frame(win, padx=10, pady=10)
+               
+        self.pmh_tree = ttk.Treeview(treeFrame, height = 20)
+        self.pmh_tree['columns'] = ("Date", "Name", "Owner", "Animal Number", "Medication", "Total Dose", "Instruction")
+        self.pmh_tree.column("#0", width=0)
+        self.pmh_tree.column("Date", minwidth=40, width=60, anchor=CENTER)
+        self.pmh_tree.column("Name", minwidth=80, width=100, anchor=CENTER)
+        self.pmh_tree.column("Owner", minwidth=80, width=100, anchor=CENTER)
+        self.pmh_tree.column("Animal Number", minwidth=80, width=100, anchor=CENTER)
+        self.pmh_tree.column("Medication", minwidth=80, width=100, anchor=CENTER)
+        self.pmh_tree.column("Total Dose", minwidth=70, width=70, anchor=CENTER)
+        self.pmh_tree.column("Instruction", width=120, anchor=CENTER)
+        
+        self.pmh_tree.heading("Date", text="Date", anchor=CENTER)
+        self.pmh_tree.heading("Name", text="Name", anchor=CENTER)
+        self.pmh_tree.heading("Owner", text="Owner", anchor=CENTER)
+        self.pmh_tree.heading("Animal Number", text="Animal Number", anchor=CENTER)
+        self.pmh_tree.heading("Medication", text="Medication", anchor=CENTER)
+        self.pmh_tree.heading("Total Dose", text="Total Dose", anchor=CENTER)
+        self.pmh_tree.heading("Instruction", text="Instruction", anchor=CENTER)    
+    
+        self.pmh_tree["displaycolumns"]=("Date", "Name", "Owner", "Animal Number", "Medication", "Total Dose", "Instruction")
+    
+        # Buttons
+        editButton = tk.Button(win, text="Edit", command=self.editHistTreeItem, width=5)
+        deleteButton = tk.Button(win, text="Delete", width=5, command=self.deleteHistItem)
+        
+        treeFrame.pack()
+        self.pmh_tree.pack()
+        editButton.pack()
+        deleteButton.pack()
+    
+    
+        # Display information in Tree
+        histTreeID = 0
+        for i in hist:
+            self.pmh_tree.insert(parent='', index='end', iid=histTreeID, text="Parent", values=(
+                i[0],
+                i[1], 
+                i[2], 
+                i[3],
+                i[4],
+                i[5],
+                i[6],
+                i[7],
+                i[8]))        
+            histTreeID+=1
+            
+            
+        
+    def historyFile(self):
+        win = Toplevel(self)
+        win.title("History File Name")
+        
+        
+        histLabel = tk.Label(win, text = "File:")
+        histFileBox = tk.Entry(win)
+        histFileBox.insert(0, "prescription-csv-history.csv")
+        saveButton = tk.Button(win, text="Save", width=5)
+        
+        histLabel.pack()
+        histFileBox.pack()
+        saveButton.pack()
     
     # ==================================================== #
     # Function:                                            #
@@ -448,6 +619,7 @@ class Application(tk.Frame):
         elif self.ampmType.get() == 1: #PM
             self.instruction = self.instruction.replace("AMPM", "PM")
         
+        self.startingDate = self.startingBox.get()
         
         ##########################################################
         # TEST
@@ -475,7 +647,38 @@ class Application(tk.Frame):
 if __name__ == "__main__":
     init()
     window = tk.Tk()
+    
+    # WINDOW TITLE
     window.title("Prescription Label Maker")
+    
+    # MENU DEFINITION
+    # menubar = Menu(window)
+    # window.config(menu=menubar)
+    
+    # # FILE MENU
+    # filemenu = Menu(menubar, tearoff=0)
+    # filemenu.add_command(label="New")
+    # filemenu.add_command(label="Exit")
+    # menubar.add_cascade(
+        # label="File",
+        # menu=filemenu
+    # )
+     
+    # # EDIT MENU
+    # editmenu = Menu(menubar, tearoff=0)
+    # editmenu.add_command(label="Undo")
+    # editmenu.add_command(label="Redo")
+    # menubar.add_cascade(
+        # label="Edit",
+        # menu=editmenu
+    # )
+    
+    # # SETTINGS MENU
+    
+    
+    
     window.geometry("1600x600")
+    
+    
     app = Application(window)
     window.mainloop()

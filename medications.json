@@ -34,6 +34,11 @@
 			"instruction": "Starting DATE AMPM give DOSE by mouth every SID/BID hours until gone.",
 			"frequency": 2
 		},
+		"Metronidazole 100mg/ml": {
+			"form": "mL",
+			"instruction": "Starting DATE AMPM give DOSE by mouth every SID/BID hours until gone.",
+			"frequency": 2
+		},
 		"Carprofen 25mg": {
 			"form": "tablet",
 			"instruction": "Starting DATE AMPM give DOSE by mouth every SID/BID hours until gone.",
@@ -61,13 +66,18 @@
 		},
 		"Mometamax": {
 			"form": "mL",
-			"instruction": "Starting DATE AMPM give DOSE by mouth every SID/BID hours until gone.",
+			"instruction": "Starting DATE AMPM give 1/2 contents of 1 syringe (DOSE) in each ear once daily until gone. Massage ears after administration.",
 			"frequency": 2
 		},
 		"Erythromycin": {
 			"form": "tube",
-			"instruction": "Starting DATE AMPM give DOSE by mouth every SID/BID hours until gone.",
+			"instruction": "Starting DATE AMPM administer ~1cm long ribbon of ointment directly into each eye every SID/BID hours until 5/26 AM.",
 			"frequency": 2
+		},
+		"Meloxicam 1.5 mg/mL": {
+			"form": "mL",
+			"instruction": "Starting DATE AMPM give DOSE by mouth every SID/BID hours until gone.",
+			"frequency": 1
 		}
 	
 		
